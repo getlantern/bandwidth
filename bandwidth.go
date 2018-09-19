@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/getlantern/golog"
+	"github.com/getlantern/zaplog"
 )
 
 var (
-	log = golog.LoggerFor("bandwidth")
+	log = zaplog.LoggerFor("bandwidth")
 
 	quota *Quota
 	mutex sync.RWMutex
@@ -49,29 +49,29 @@ func GetQuota() *Quota {
 func Track(resp *http.Response) {
 	xbq := resp.Header.Get("XBQ")
 	if xbq == "" {
-		log.Debugf("Response missing XBQ header, can't read bandwidth quota")
+		log.Infof("Response missing XBQ header, can't read bandwidth quota")
 		return
 	}
 	// Remove the XBQ header to avoid leaking it to clients
 	resp.Header.Del("XBQ")
 	parts := strings.Split(xbq, "/")
 	if len(parts) != 3 {
-		log.Debugf("Malformed XBQ header %v, can't read bandwidth quota", xbq)
+		log.Infof("Malformed XBQ header %v, can't read bandwidth quota", xbq)
 		return
 	}
 	used, err := strconv.ParseUint(parts[0], 10, 64)
 	if err != nil {
-		log.Debugf("Malformed XBQ header %v, can't parse used MiB: %v", err)
+		log.Infof("Malformed XBQ header %v, can't parse used MiB: %v", err)
 		return
 	}
 	allowed, err := strconv.ParseUint(parts[1], 10, 64)
 	if err != nil {
-		log.Debugf("Malformed XBQ header %v, can't parse allowed MiB: %v", err)
+		log.Infof("Malformed XBQ header %v, can't parse allowed MiB: %v", err)
 		return
 	}
 	asofInt, err := strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
-		log.Debugf("Malformed XBQ header %v, can't parse as of time: %v", err)
+		log.Infof("Malformed XBQ header %v, can't parse as of time: %v", err)
 		return
 	}
 	asof := epoch.Add(time.Duration(asofInt) * time.Second)
